@@ -33,8 +33,7 @@ if currentBranch="$(git current-branch)"; then
     git pull --rebase
     git push --force-with-lease
     # check if upstream exists, rebase if it does
-    git remote -v | grep upstream >/dev/null
-    if [[ "$?" != "1" ]]; then
+    if git is-fork ; then
       git rebase upstream/master
       git push --force-with-lease
     fi

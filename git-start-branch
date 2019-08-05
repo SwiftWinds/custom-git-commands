@@ -1,9 +1,5 @@
 #!/usr/bin/env zsh
 
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-NC='\033[0m' # no color
-
 zparseopts -D -E -- -based-off:=args
 
 if [[ "$#@" -gt 0 ]]; then
@@ -25,23 +21,23 @@ if undefined -s "$newBranch"; then
  read -r newBranch
 fi
 
-echo "${GREEN}Received new branch ${newBranch}${NC}"
+lg -g "Received new branch ${newBranch}"
 
 # if baseBranch NOT defined, branch off this branch
 if [[ -z "$baseBranch" ]]; then
  baseBranch="$(git current-branch)"
- echo "${GREEN}No base branch passed...basing on current branch ${baseBranch}...${NC}"
+ lg -g "No base branch passed...basing on current branch ${baseBranch}..."
 else
- echo "${GREEN}Using base branch ${baseBranch}${NC}"
+ lg -g "Using base branch ${baseBranch}"
 fi
 
 if git branch-exists "${newBranch}" >/dev/null 2>&1; then
- echo "${RED}FATAL: branch ${newBranch} already exists!${NC}"
+ lg -r "FATAL: branch ${newBranch} already exists!"
  exit "1"
 fi
 
 if ! git branch-exists "${baseBranch}" >/dev/null 2>&1; then
- echo "${RED}FATAL: cannot base off non-existent branch ${baseBranch}!${NC}"
+ lg -r "FATAL: cannot base off non-existent branch ${baseBranch}!"
  exit "1"
 fi
 
@@ -57,17 +53,17 @@ lgln -g "Switching to base branch $baseBranch"
 git checkout "$baseBranch"
 lgln -g "Creating and switching to new branch called ${newBranch}..."
 git checkout -b "$newBranch"
-echo "${GREEN}Pushing...${NC}"
+lg -g "Pushing..."
 git push
-echo "${GREEN}Setting upstream to origin/$newBranch...${NC}"
+lg -g "Setting upstream to origin/$newBranch..."
 git branch --set-upstream-to=origin/"$newBranch" "$newBranch"
 
 # if a branch not master previously defined
 if [[ -n "${prevBranch+x}" ]]; then
- echo "${GREEN}Checking out ${prevBranch} (branch with uncommitted changes)${NC}"
+ lg -g "Checking out ${prevBranch} (branch with uncommitted changes)"
  git checkout "$prevBranch"
- echo "${GREEN}Let me unstash those uncommitted changes to the branch ${prevBranch}...${NC}"
+ lg -g "Let me unstash those uncommitted changes to the branch ${prevBranch}..."
  git stash pop
- echo "${GREEN}Checking out new branch ${newBranch}...${NC}"
+ lg -g "Checking out new branch ${newBranch}..."
  git checkout "$newBranch"
 fi

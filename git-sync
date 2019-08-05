@@ -1,9 +1,5 @@
 #!/bin/sh
 
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-NC='\033[0m' # no color
-
 # Default param is "master"
 masterBranch="${1:-master}"
 
@@ -14,9 +10,9 @@ if currentBranch="$(git current-branch)"; then
   echo "Pulling updates from the remote branch $masterBranch ..."
   git diff-index --quiet HEAD --
   if [[ "$?" -eq 1 ]]; then
-    echo "${GREEN}Looks like there are uncommitted changes... stashing...${NC}"
+    lg -g "Looks like there are uncommitted changes... stashing..."
     git stash
-    echo "${GREEN}Saving branch with uncommitted changes...${NC}"
+    lg -g "Saving branch with uncommitted changes..."
     prevBranch="$(git current-branch)"
   fi
   if [[ "$masterBranch" == "$currentBranch" ]]; then

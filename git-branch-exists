@@ -1,16 +1,12 @@
 #!/bin/sh
 
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-NC='\033[0m' # no color
-
 branch=$1
 
 git rev-parse --verify "$1" >/dev/null 2>&1
 if [[ "$?" -eq 0 ]]; then
- echo "${GREEN}${branch} exists!${NC}"
+ lg -g "${branch} exists!"
  exit "0"
 else
- echo "${RED}${branch} does NOT exist!${NC}"
+ lg -r "${branch} does NOT exist!"
  exit "1"
 fi

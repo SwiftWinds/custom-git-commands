@@ -1,0 +1,15 @@
+#!/bin/sh
+
+newCommit=$1
+
+if undefined "$newCommit" >/dev/null 2>&1; then
+	lg -g "Name of new commit: "
+	read -r newCommit
+fi
+
+newCommit="WIP: ${newCommit}"
+
+lgln -g "Committing empty commit with commit name ${newCommit}..."
+git commit --allow-empty -m "$newCommit"
+lgln -g "Pushing..."
+git push

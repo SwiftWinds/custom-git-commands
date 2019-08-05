@@ -19,4 +19,4 @@ if [ "$#@" -gt 0 ]; then
 	input=$@
 fi
 
-echo "${color}${input}${NC}"
+printf "${color}${input}${NC}"

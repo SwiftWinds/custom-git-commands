@@ -1,6 +1,6 @@
 #!/bin/sh
 
-currentBranch=$(git symbolic-ref --short -q HEAD)
+currentBranch=$(git current-branch)
 
 read -p "Are you sure you want to delete ${currentBranch}? " -n 1 -r
 echo    # (optional) move to a new line

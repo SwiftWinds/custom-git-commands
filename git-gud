@@ -2,11 +2,17 @@
 
 flag=$1
 
-if [ "$flag" = "-c" ] || [ "$flag" = "--continue" ]; then
-	git finish-commit
-elif git log -1 --pretty=%B | grep -q "WIP" ; then
-	git continue-commit
+if git prev-commit | grep -q "WIP"; then
+	if [ "$flag" = "-c" ] || [ "$flag" = "--continue" ]; then
+		git continue-commit
+	else
+		git finish-commit
+	fi
 else
+	if defined -s "$flag"; then
+		lg -y "WARN: flags are not applicable, because the previous commit was not WIP. Commit anyways? "
+		request-user-confirmation
+	fi
 	git add -A
 	git commit
 	git push

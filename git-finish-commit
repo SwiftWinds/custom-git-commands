@@ -1,6 +1,6 @@
 #!/bin/sh
 
-prevCommit=$(git log -1 --pretty=%B)
+prevCommit=$(git prev-commit)
 
 # check if previous commit contains "WIP"
 if ! git log -1 --pretty=%B | grep -q "WIP" ; then

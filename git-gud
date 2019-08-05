@@ -1,0 +1,13 @@
+#!/bin/sh
+
+flag=$1
+
+if [ "$flag" = "-c" ] || [ "$flag" = "--continue" ]; then
+	git finish-commit
+elif git log -1 --pretty=%B | grep -q "WIP" ; then
+	git continue-commit
+else
+	git add -A
+	git commit
+	git push
+fi

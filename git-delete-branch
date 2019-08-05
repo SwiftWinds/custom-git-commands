@@ -9,6 +9,9 @@ then
     exit 1
 fi
 
+lg -g "Checking out master..."
 git checkout master
+lg -g "Force deleting (local) branch $currentBranch..."
 git branch -D "$currentBranch"
+lg -g "Deleting (remote) branch origin/$currentBranch..."
 git push origin --delete "$currentBranch"

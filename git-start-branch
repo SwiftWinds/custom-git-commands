@@ -35,15 +35,12 @@ else
  echo "${GREEN}Using base branch ${baseBranch}${NC}"
 fi
 
-
-git rev-parse --verify "${newBranch}" >/dev/null 2>&1
-if [[ "$?" -eq 0 ]]; then
+if git branch-exists "${newBranch}" >/dev/null 2>&1; then
  echo "${RED}FATAL: branch ${newBranch} already exists!${NC}"
  exit "1"
 fi
 
-git rev-parse --verify "${baseBranch}" >/dev/null 2>&1
-if [[ ! "$?" -eq 0 ]]; then
+if ! git branch-exists "${baseBranch}" >/dev/null 2>&1; then
  echo "${RED}FATAL: cannot base off non-existent branch ${baseBranch}!${NC}"
  exit "1"
 fi

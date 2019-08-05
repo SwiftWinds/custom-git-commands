@@ -1,0 +1,28 @@
+#!/bin/sh
+
+currentBranch=$(git symbolic-ref --short -q HEAD)
+
+read -p "Are you sure you want to finish ${currentBranch}? " -n 1 -r
+echo    # (optional) move to a new line
+if [[ ! $REPLY =~ ^[Yy]$ ]]
+then
+    exit 1
+fi
+
+git fetch --all
+git checkout master
+git pull --rebase
+git push --force-with-lease
+git checkout "$currentBranch"
+git pull --rebase
+git push --force-with-lease
+git rebase master
+git reset $(git merge-base master "$currentBranch")
+git add -A
+git commit
+git push --force-with-lease
+git checkout master
+git rebase "$currentBranch"
+git branch -D "$currentBranch"
+git push origin --delete "$currentBranch"
+git push

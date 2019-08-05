@@ -1,0 +1,76 @@
+#!/usr/bin/env zsh
+
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m' # no color
+
+zparseopts -D -E -- -based-off:=args
+
+if [[ "$#@" -gt 0 ]]; then
+    newBranch=$(echo "$@" | head -n1 | awk '{print $1;}')
+fi
+
+typeset -A helper
+helper=($(seq 1 ${#args}))
+
+for arg in ${(@v)helper}
+do
+    baseBranch=${args[$arg]}
+done
+
+# if newBranch NOT defined, ask for branch
+if undefined -s "$newBranch"; then
+ lgln -g "Looks like new branch was null or empty..."
+ lg -g "Name of new branch: "
+ read -r newBranch
+fi
+
+echo "${GREEN}Received new branch ${newBranch}${NC}"
+
+# if baseBranch NOT defined, branch off this branch
+if [[ -z "$baseBranch" ]]; then
+ baseBranch="$(git current-branch)"
+ echo "${GREEN}No base branch passed...basing on current branch ${baseBranch}...${NC}"
+else
+ echo "${GREEN}Using base branch ${baseBranch}${NC}"
+fi
+
+
+git rev-parse --verify "${newBranch}" >/dev/null 2>&1
+if [[ "$?" -eq 0 ]]; then
+ echo "${RED}FATAL: branch ${newBranch} already exists!${NC}"
+ exit "1"
+fi
+
+git rev-parse --verify "${baseBranch}" >/dev/null 2>&1
+if [[ ! "$?" -eq 0 ]]; then
+ echo "${RED}FATAL: cannot base off non-existent branch ${baseBranch}!${NC}"
+ exit "1"
+fi
+
+git diff-index --quiet HEAD --
+if [[ "$?" -eq 1 ]]; then
+ lgln -g "Looks like there are uncommitted changes... stashing..."
+ git stash --include-untracked
+ lgln -g "Storing name of branch with uncommitted changes..."
+ prevBranch="$(git current-branch)"
+fi
+
+lgln -g "Switching to base branch $baseBranch"
+git checkout "$baseBranch"
+lgln -g "Creating and switching to new branch called ${newBranch}..."
+git checkout -b "$newBranch"
+echo "${GREEN}Pushing...${NC}"
+git push
+echo "${GREEN}Setting upstream to origin/$newBranch...${NC}"
+git branch --set-upstream-to=origin/"$newBranch" "$newBranch"
+
+# if a branch not master previously defined
+if [[ -n "${prevBranch+x}" ]]; then
+ echo "${GREEN}Checking out ${prevBranch} (branch with uncommitted changes)${NC}"
+ git checkout "$prevBranch"
+ echo "${GREEN}Let me unstash those uncommitted changes to the branch ${prevBranch}...${NC}"
+ git stash pop
+ echo "${GREEN}Checking out new branch ${newBranch}...${NC}"
+ git checkout "$newBranch"
+fi

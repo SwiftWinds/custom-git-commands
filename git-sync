@@ -1,0 +1,57 @@
+#!/bin/sh
+
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m' # no color
+
+# Default param is "master"
+masterBranch="${1:-master}"
+
+# Find which is your current branch
+if currentBranch="$(git current-branch)"; then
+  git fetch --all
+  echo On branch "$currentBranch"
+  echo "Pulling updates from the remote branch $masterBranch ..."
+  git diff-index --quiet HEAD --
+  if [[ "$?" -eq 1 ]]; then
+    echo "${GREEN}Looks like there are uncommitted changes... stashing...${NC}"
+    git stash
+    echo "${GREEN}Saving branch with uncommitted changes...${NC}"
+    prevBranch="$(git current-branch)"
+  fi
+  if [[ "$masterBranch" == "$currentBranch" ]]; then
+    git pull --rebase
+    git push --force-with-lease
+    # check if upstream exists, rebase if it does
+    git remote -v | grep upstream >/dev/null
+    if [[ "$?" != "1" ]]; then
+      git rebase upstream/master
+      git push --force-with-lease
+    fi
+  else
+    # Stash current changes
+    git stash
+    # Checkout remote branch from where you want to update.
+    git checkout "$masterBranch"
+    # Pull the branch to update it
+    git pull --rebase
+    git push --force-with-lease
+    # check if upstream exists, rebase if it does
+    git remote -v | grep upstream >/dev/null
+    if [[ "$?" != "1" ]]; then
+      git rebase upstream/master
+      git push --force-with-lease
+    fi
+    # Checkout current branch which you were on before.
+    git checkout "$currentBranch"
+    # Rebase the changes
+    git rebase "$masterBranch"
+    git push --force-with-lease
+    # Apply the stashed changes
+    git stash pop
+
+    echo "Updated the $currentBranch with changes from $masterBranch"
+  fi
+else
+  echo ERROR: Cannot find the current branch!
+fi

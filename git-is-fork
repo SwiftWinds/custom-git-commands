@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# check if upstream exists, rebase if it does
+git remote -v | grep upstream >/dev/null
+if [[ "$?" == "1" ]]; then
+  lg -r "Not a fork!"
+  exit "1"
+else
+  lg -g "Is fork!"
+  exit "0"
+fi

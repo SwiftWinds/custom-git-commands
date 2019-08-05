@@ -1,0 +1,10 @@
+#!/bin/sh
+
+prevCommit=$(git log -1 --pretty=%B)
+
+lgln -g "Staging all changes..."
+git add -A
+lgln -g "Commiting with same commit message \"$prevCommit\"..."
+git commit --amend --no-edit
+lgln -g "Force (with lease) pushing..."
+git push --force-with-lease

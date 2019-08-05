@@ -1,0 +1,21 @@
+#!/bin/sh
+
+prevCommit=$(git log -1 --pretty=%B)
+
+# check if previous commit contains "WIP"
+if ! git log -1 --pretty=%B | grep -q "WIP" ; then
+	lgln -r "FATAL: previous commit was not a WIP commit"
+	exit "1"
+fi
+
+# only safe to declare newCommit 
+# once we know for sure that prevCommit has "WIP" in it
+newCommit=${prevCommit/WIP: /}
+
+lgln -g "Received previous commit $prevCommit..."
+lgln -g "Staging all changes..."
+git add -A
+lgln -g "Committing new commit $newCommit..."
+git commit --amend -m "${prevCommit/WIP: /}"
+lgln -g "Force (with lease) pushing..."
+git push --force-with-lease

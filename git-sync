@@ -10,9 +10,9 @@ if currentBranch="$(git current-branch)"; then
   echo "Pulling updates from the remote branch $masterBranch ..."
   git diff-index --quiet HEAD --
   if [[ "$?" -eq 1 ]]; then
-    lg -g "Looks like there are uncommitted changes... stashing..."
+    lgln -g "Looks like there are uncommitted changes... stashing..."
     git stash
-    lg -g "Saving branch with uncommitted changes..."
+    lgln -g "Saving branch with uncommitted changes..."
     prevBranch="$(git current-branch)"
   fi
   if [[ "$masterBranch" == "$currentBranch" ]]; then

@@ -4,9 +4,9 @@ branch=$1
 
 git rev-parse --verify "$1" >/dev/null 2>&1
 if [[ "$?" -eq 0 ]]; then
- lg -g "${branch} exists!"
+ lgln -g "${branch} exists!"
  exit "0"
 else
- lg -r "${branch} does NOT exist!"
+ lgln -r "${branch} does NOT exist!"
  exit "1"
 fi

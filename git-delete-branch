@@ -3,7 +3,7 @@
 targetBranch=${1:-"$(git current-branch)"}
 
 if ! git branch-exists "${targetBranch}" >/dev/null 2>&1; then
-    lg -r "FATAL: branch ${targetBranch} does not exists!"
+    lgln -r "FATAL: branch ${targetBranch} does not exists!"
     exit "1"
 fi
 
@@ -14,9 +14,9 @@ then
     exit "1"
 fi
 
-lg -g "Checking out master..."
+lgln -g "Checking out master..."
 git checkout master
-lg -g "Force deleting (local) branch $targetBranch..."
+lgln -g "Force deleting (local) branch $targetBranch..."
 git branch -D "$targetBranch"
-lg -g "Deleting (remote) branch origin/$targetBranch..."
+lgln -g "Deleting (remote) branch origin/$targetBranch..."
 git push origin --delete "$targetBranch"

@@ -21,23 +21,23 @@ if undefined -s "$newBranch"; then
  read -r newBranch
 fi
 
-lg -g "Received new branch ${newBranch}"
+lgln -g "Received new branch ${newBranch}"
 
 # if baseBranch NOT defined, branch off this branch
 if [[ -z "$baseBranch" ]]; then
  baseBranch="$(git current-branch)"
- lg -g "No base branch passed...basing on current branch ${baseBranch}..."
+ lgln -g "No base branch passed...basing on current branch ${baseBranch}..."
 else
- lg -g "Using base branch ${baseBranch}"
+ lgln -g "Using base branch ${baseBranch}"
 fi
 
 if git branch-exists "${newBranch}" >/dev/null 2>&1; then
- lg -r "FATAL: branch ${newBranch} already exists!"
+ lgln -r "FATAL: branch ${newBranch} already exists!"
  exit "1"
 fi
 
 if ! git branch-exists "${baseBranch}" >/dev/null 2>&1; then
- lg -r "FATAL: cannot base off non-existent branch ${baseBranch}!"
+ lgln -r "FATAL: cannot base off non-existent branch ${baseBranch}!"
  exit "1"
 fi
 
@@ -53,17 +53,17 @@ lgln -g "Switching to base branch $baseBranch"
 git checkout "$baseBranch"
 lgln -g "Creating and switching to new branch called ${newBranch}..."
 git checkout -b "$newBranch"
-lg -g "Pushing..."
+lgln -g "Pushing..."
 git push
-lg -g "Setting upstream to origin/$newBranch..."
+lgln -g "Setting upstream to origin/$newBranch..."
 git branch --set-upstream-to=origin/"$newBranch" "$newBranch"
 
 # if a branch not master previously defined
 if [[ -n "${prevBranch+x}" ]]; then
- lg -g "Checking out ${prevBranch} (branch with uncommitted changes)"
+ lgln -g "Checking out ${prevBranch} (branch with uncommitted changes)"
  git checkout "$prevBranch"
- lg -g "Let me unstash those uncommitted changes to the branch ${prevBranch}..."
+ lgln -g "Let me unstash those uncommitted changes to the branch ${prevBranch}..."
  git stash pop
- lg -g "Checking out new branch ${newBranch}..."
+ lgln -g "Checking out new branch ${newBranch}..."
  git checkout "$newBranch"
 fi

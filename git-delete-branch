@@ -1,17 +1,22 @@
 #!/bin/sh
 
-currentBranch=$(git current-branch)
+targetBranch=${1:-"$(git current-branch)"}
 
-read -p "Are you sure you want to delete ${currentBranch}? " -n 1 -r
+if ! git branch-exists "${targetBranch}" >/dev/null 2>&1; then
+    lg -r "FATAL: branch ${targetBranch} does not exists!"
+    exit "1"
+fi
+
+read -p "Are you sure you want to delete ${targetBranch}? " -n 1 -r
 echo    # (optional) move to a new line
 if [[ ! $REPLY =~ ^[Yy]$ ]]
 then
-    exit 1
+    exit "1"
 fi
 
 lg -g "Checking out master..."
 git checkout master
-lg -g "Force deleting (local) branch $currentBranch..."
-git branch -D "$currentBranch"
-lg -g "Deleting (remote) branch origin/$currentBranch..."
-git push origin --delete "$currentBranch"
+lg -g "Force deleting (local) branch $targetBranch..."
+git branch -D "$targetBranch"
+lg -g "Deleting (remote) branch origin/$targetBranch..."
+git push origin --delete "$targetBranch"

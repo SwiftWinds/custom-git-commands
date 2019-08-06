@@ -1,52 +1,66 @@
 #!/bin/sh
 
-# Default param is "master"
-masterBranch="${1:-master}"
+targetBranch=${1:-"$(git current-branch)"}
+currentBranchWasDirty=false
+targetBranchWasDirty=false
 
 # Find which is your current branch
 if currentBranch="$(git current-branch)"; then
-  git fetch --all
-  echo On branch "$currentBranch"
-  echo "Pulling updates from the remote branch $masterBranch ..."
-  git diff-index --quiet HEAD --
-  if [[ "$?" -eq 1 ]]; then
-    lgln -g "Looks like there are uncommitted changes... stashing..."
-    git stash
-    lgln -g "Saving branch with uncommitted changes..."
-    prevBranch="$(git current-branch)"
+  lgln -g "On branch $currentBranch"
+  if git is-dirty; then
+    lgln -g "Looks like there are uncommitted changes on the current branch... stashing..."
+    git stash --include-untracked
+    lgln -g "Remembering that $currentBranch has uncommitted changes..."
+    currentBranchWasDirty=true
   fi
-  if [[ "$masterBranch" == "$currentBranch" ]]; then
-    git pull --rebase
-    git push --force-with-lease
-    # check if upstream exists, rebase if it does
-    git remote -v | grep upstream >/dev/null
-    if [[ "$?" != "1" ]]; then
-      git rebase upstream/master
-      git push --force-with-lease
+  lgln -g "Checking out master..."
+  git checkout master
+  lgln -g "Pulling updates from the remote branch origin/master..."
+  # Pull the branch to update it
+  git pull --rebase
+  (stop-if-conflicts) || exit $?
+  lgln -g "Updated master with changes from origin/master"
+  # check if upstream exists, rebase if it does
+  if git is-fork; then
+    lgln -g "Looks like this is a fork. Rebasing upstream master..."
+    git rebase upstream/master
+    (stop-if-conflicts) || exit $?
+  fi
+  if [ "$targetBranch" != "master" ]; then
+    lgln -g "Checking out target branch $targetBranch..."
+    git checkout "$targetBranch"
+    if git is-dirty; then
+      lgln -g "Looks like there are uncommitted changes on target branch... stashing..."
+      git stash --include-untracked
+      lgln -g "Remembering that target branch had uncommitted changes..."
+      targetBranchWasDirty=true
     fi
-  else
-    # Stash current changes
-    git stash
-    # Checkout remote branch from where you want to update.
-    git checkout "$masterBranch"
-    # Pull the branch to update it
-    git pull --rebase
-    git push --force-with-lease
-    # check if upstream exists, rebase if it does
-    if git is-fork ; then
-      git rebase upstream/master
-      git push --force-with-lease
-    fi
-    # Checkout current branch which you were on before.
-    git checkout "$currentBranch"
     # Rebase the changes
-    git rebase "$masterBranch"
+    lgln -g "Updating target branch $targetBranch to latest master..."
+    git rebase master
+    (stop-if-conflicts) || exit $?
+    lgln -g "Force (with lease) pushing..."
     git push --force-with-lease
+    lgln -g "Updated target branch $targetBranch with changes from master"
+  fi
+  if [ $targetBranchWasDirty = "true" ] ; then
     # Apply the stashed changes
+    lgln -g "Checking out target branch $targetBranch's previously unsaved changes..."
+    git checkout "$targetBranch"
+    lgln -g "Unstashing target branch $targetBranch's previously unsaved changes..."
     git stash pop
-
-    echo "Updated the $currentBranch with changes from $masterBranch"
+    (stop-if-conflicts) || exit $?
+  fi
+  if [ $currentBranchWasDirty = "true" ] && [ "$currentBranch" != "$targetBranch" ]; then
+    # Apply the stashed changes
+    lgln -g "Checking out $currentBranch (the branch you were on when you started syncing)..."
+    git checkout "$currentBranch"
+    lgln -g "Unstashing $currentBranch (the branch you were on when you started syncing)..."
+    git stash pop
+    (stop-if-conflicts) || exit $?
   fi
 else
-  echo ERROR: Cannot find the current branch!
+  lgln -g ERROR: Cannot find the current branch!
 fi
+
+lgln -g "Done! :)"

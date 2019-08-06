@@ -1,28 +1,105 @@
 #!/bin/sh
 
-currentBranch=$(git current-branch)
+targetBranch=${1:-"$(git current-branch)"}
 
-read -p "Are you sure you want to finish ${currentBranch}? " -n 1 -r
-echo    # (optional) move to a new line
-if [[ ! $REPLY =~ ^[Yy]$ ]]
-then
-    exit 1
+declare -a stashBranches
+
+(request-user-confirmation-to "finish ${targetBranch}") || exit $?
+
+if ! git branch-exists "$targetBranch"; then
+  lg -y "WARN: Looks like the feature branch $targetBranch does not exist. Continue? "
+  (request-user-input) || exit $?
+fi
+if git is-dirty; then
+  currentBranch="$(git current-branch)"
+  lgln -g "Stashing $currentBranch since there are uncommited changes..."
+  git stash --include-untracked
+  lgln -g "Remembering $currentBranch had uncommitted changes..."
+  stashBranches[0]="$currentBranch"
+fi
+lg -g "Checking out master..."
+git checkout master
+if git is-dirty; then
+  lgln -g "Stashing master since there are uncommited changes..."
+  git stash --include-untracked
+  lgln -g "Remembering master had uncommitted changes..."
+  stashBranches[1]="master"
+fi
+lgln -g "Pulling updates from the remote branch origin/master..."
+git pull --rebase
+(stop-if-conflicts) || exit $?
+if git branch-exists "$targetBranch"; then
+  lg -g "Checking out feature branch $targetBranch..."
+  git checkout "$targetBranch"
+  if git is-dirty; then
+    lgln -y "WARN: looks like feature branch $targetBranch has uncommited changes. Continue? "
+    (request-user-input) || exit $?
+    lg -g "Stashing unsaved changes on feature branch $targetBranch..."
+    git stash --include-untracked
+    lgln -g "Remembering that feature branch $targetBranch had uncommitted changes..."
+    stashBranches[2]="master"
+  fi
+  lgln -g "Pulling updates from the remote branch origin/$targetBranch..."
+  git pull --rebase
+  (stop-if-conflicts) || exit $?
+  if defined -s "${stashBranches[2]}"; then
+    lgln -g "Popping off feature branch $targetBranch's stash..."
+    git stash pop
+    (stop-if-conflicts) || exit $?
+  fi
+  lgln -g "Updating feature branch $targetBranch to latest master..."
+  git rebase master
+  (stop-if-conflicts) || exit $?
+  lgln -g "Squashing commits..."
+  git reset "$(git merge-base master "$targetBranch")"
+  git add -A
+  lgln -g "Please enter a commit message for the single (squashed) commit"
+  git commit
+  lgln -g "Force (with lease) pushing..."
+  git push --force-with-lease
+  lgln -g "Checking out master..."
+  git checkout master
+  lgln -g "Incorporating feature branch $targetBranch's features in master..."
+  git rebase "$targetBranch"
+  (stop-if-conflicts) || exit $?
+  lgln -g "Force deleting (local) feature branch $targetBranch..."
+  git branch -D "$targetBranch"
+  lgln -g "Deleting (remote) feature branch origin/$targetBranch..."
+  git push origin --delete "$targetBranch"
+  git push
+  lgln -g "Pushing squashed commit..."
 fi
 
-git fetch --all
-git checkout master
-git pull --rebase
-git push --force-with-lease
-git checkout "$currentBranch"
-git pull --rebase
-git push --force-with-lease
-git rebase master
-git reset $(git merge-base master "$currentBranch")
-git add -A
-git commit
-git push --force-with-lease
-git checkout master
-git rebase "$currentBranch"
-git branch -D "$currentBranch"
-git push origin --delete "$currentBranch"
-git push
+if defined -s "${stashBranches[0]}"; then
+  lgln -g "I remember that $currentBranch had unsaved commits. Let me unstash that"
+  lgln -g "Checking out $currentBranch"
+  git checkout "$currentBranch"
+  lgln -g "Unstashing $currentBranch's stash..."
+  git stash pop
+  (stop-if-conflicts) || exit $?
+fi
+
+if defined -s "${stashBranches[1]}"; then
+  lgln -g "I remember that master had unsaved commits. Let me unstash that"
+  lgln -g "Checking out master..."
+  git checkout master
+  lgln -g "Unstashing master's stash..."
+  git stash pop
+  (stop-if-conflicts) || exit $?
+fi
+
+lgln -g "Done! :)"
+
+#if defined -s "${stashBranches[@]}"; then
+#  indices=( "${!stashBranches[@]}" )
+#  for ((i=${#indices[@]} - 1; i >= 0; i--)) ; do
+#      if git branch-exists "${arr[indices[i]]}" ; then
+#        prevBranch="$(git current-branch)"
+#        git checkout "${arr[indices[i]]}"
+#        git stash pop
+#        (stop-if-conflicts) || exit $?
+#        exit_on_error $? !!
+#        git checkout "$prevBranch"
+#      fi
+#  done
+#fi

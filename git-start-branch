@@ -24,7 +24,7 @@ fi
 lgln -g "Received new branch ${newBranch}"
 
 # if baseBranch NOT defined, branch off this branch
-if [[ -z "$baseBranch" ]]; then
+if undefined -s "$baseBranch"; then
  baseBranch="$(git current-branch)"
  lgln -g "No base branch passed...basing on current branch ${baseBranch}..."
 else

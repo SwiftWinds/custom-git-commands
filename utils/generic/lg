@@ -21,7 +21,7 @@ if (( ${+Args[-y]} )); then
 fi
 
 if [ "$#@" -gt 0 ]; then
-	if [[ -z "$textColor" ]]; then # if textColor undefined, default to green
+	if undefined -s $textColor; then # if textColor undefined, default to green
 		textColor=$GREEN
 	fi
 	input=$@

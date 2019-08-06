@@ -47,7 +47,7 @@ fi
 if defined -s "$commitName"; then
   lgln -g "Commiting with commit message $commitName"
   git commit -m "$commitName"
-else
+elif git is-dirty; then
   lgln -g "Please enter a commit message"
   git commit
 fi

@@ -1,0 +1,11 @@
+#!/bin/sh
+
+currentBranch=$(git current-branch)
+
+if git diff-index --quiet HEAD -- >/dev/null 2>&1 && git ls-files --other --directory --exclude-standard | sed q1 >/dev/null 2>&1 ; then
+ lgln -g "${currentBranch} is clean!"
+ false
+else
+ lgln -r "${currentBranch} is dirty!"
+ true
+fi

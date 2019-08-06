@@ -15,5 +15,5 @@ else
 	fi
 	git add -A
 	git commit
-	git push
+	git push --force-with-lease
 fi

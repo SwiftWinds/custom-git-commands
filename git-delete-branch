@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 targetBranch=${1:-"$(git current-branch)"}
 

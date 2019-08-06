@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 git commit
 git push

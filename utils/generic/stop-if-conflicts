@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if git conflicts ; then
     lgln -r "FATAL: cannot continue until all conflicts are resolved."

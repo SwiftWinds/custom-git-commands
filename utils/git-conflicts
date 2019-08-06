@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 CONFLICTS=$(git ls-files -u | wc -l)
 if [ "$CONFLICTS" -gt 0 ] ; then

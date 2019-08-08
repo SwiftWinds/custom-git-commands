@@ -1,4 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env zsh
+
+zparseopts -D -E -A args -- y -yes
+
+(( noConfirmation = ${+args[-y]} + ${+args[--yes]} ))
 
 targetBranch=${1:-"$(git current-branch)"}
 
@@ -7,11 +11,8 @@ if ! git-branch-exists -s "${targetBranch}" >/dev/null 2>&1; then
     exit "1"
 fi
 
-read -p "Are you sure you want to delete ${targetBranch}? " -n 1 -r
-echo    # (optional) move to a new line
-if [[ ! $REPLY =~ ^[Yy]$ ]]
-then
-    exit "1"
+if [ $noConfirmation = 0 ]; then
+    (request-user-confirmation-to "delete ${targetBranch}") || exit $?
 fi
 
 lgln -g "Checking out master..."

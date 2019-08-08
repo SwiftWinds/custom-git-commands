@@ -62,5 +62,3 @@ if currentBranch="$(git current-branch)"; then
 else
   lgln -g ERROR: Cannot find the current branch!
 fi
-
-lgln -g "Done! :)"

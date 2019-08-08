@@ -1,17 +1,20 @@
-#!/usr/bin/env zsh
+#!/bin/sh
 
-zparseopts -D -E -A args -- s -silent
+flag=$1
 
-(( silent = ${+args[-s]} + ${+args[--silent]} ))
+# false = exit 1 = undefined = "actually means true  (as in it is true  that it is undefined)"
+# true  = exit 0 = defined   = "actually means false (as in it is false that it is defined)"
 
-if [ "$#@" -gt 0 ]; then
-	if [[ $silent == 0 ]]; then
-		lgln -g "Defined!"
-	fi
-	false
-else
-	if [[ $silent == 0 ]]; then
-		lgln -r "Undefined!"
-	fi
-	true
+if [ -z "$*" ]; then # there is nothing there (undefined)
+  lgln -r "Undefined!"
+  true
+elif [ "$flag" = "-s" ] || [ "$flag" = "--silent" ]; then # (undefined -s ? or undefined --silent ?)
+  if [ -z "$2" ]; then # (undefined -s or undefined --silent)
+    true
+  else # (undefined -s ... or undefined --silent ...)
+    false
+  fi
+else # (undefined ...)
+  lgln -g "Defined!"
+  false
 fi

@@ -1,109 +1,162 @@
 #!/bin/bash
 
 targetBranch=${1:-"$(git current-branch)"}
-
-declare -a stashBranches
+tempDir="$HOME/.git_temp"
+tempFile="$tempDir/saved_stashes.txt"
 
 (request-user-confirmation-to "finish ${targetBranch}") || exit $?
 
 (git-sync "$@") || exit $?
 
-currentBranch="$(git current-branch)"
-
-if git is-dirty; then
-  lgln -g "Stashing $currentBranch since there are uncommited changes..."
-  git stash --include-untracked
-  lgln -g "Remembering $currentBranch had uncommitted changes..."
-  if [ "$targetBranch" != "$currentBranch" ]; then
-    stashBranches[0]="$currentBranch"
+exists() {
+  if defined -s "$1"; then
+    if test -f "$FILE"; then
+      return "0"
+    else
+      return "1"
+    fi
   else
-    lgln -g "Looks like $currentBranch is also our target branch. I'll make note of that"
-    stashBranches[2]="$currentBranch"
+    return "1"
   fi
-fi
-lgln -g "Checking out master..."
-git checkout master
-if git is-dirty; then
-  lgln -g "Stashing master since there are uncommited changes..."
-  git stash --include-untracked
-  lgln -g "Remembering master had uncommitted changes..."
-  stashBranches[1]="master"
-fi
-if git-branch-exists -s "$targetBranch"; then
-  lgln -g "Checking out feature branch $targetBranch..."
-  git checkout "$targetBranch"
+}
+
+remove_output_of() {
+  "$@"
+  return "$?"
+}
+
+create_temp_file() {
+  mkdir -p "$tempDir"
+  touch -a "$tempFile"
+}
+
+add_to_top_of_file() {
+  echo "$1" | cat - "$tempFile" >temp && mv temp "$tempFile"
+}
+
+remember_branch() {
+  add_to_top_of_file "$1:remember$1"
+}
+
+stash_branch() {
+  lgln -g "Stashing $1 since there are uncommited changes..."
+  git stash push -m "remember$1" --include-untracked
+  lgln -g "Remembering $1 had uncommitted changes..."
+  if ! exists "$tempFile"; then
+    create_temp_file
+  fi
+  remember_branch "$1"
+}
+
+checkout() {
+  if [ "$1" = "$targetBranch" ]; then
+    lgln -g "Checking out feature branch $1..."
+  else
+    lgln -g "Checking out $1..."
+  fi
+  if ! git checkout "$1"; then
+    stash_branch "$(git current-branch)"
+  fi
+}
+
+pull_rebase() {
   if git is-dirty; then
-    lgln -y "WARN: looks like feature branch $targetBranch has uncommited changes. Continue? "
-    (request-user-input) || exit $?
-    lgln -g "Stashing unsaved changes on feature branch $targetBranch..."
-    git stash --include-untracked
-    lgln -g "Remembering that feature branch $targetBranch had uncommitted changes..."
-    stashBranches[2]="master"
+    if [ "$1" = "$targetBranch" ]; then
+      lgln -y "WARN: looks like feature branch $targetBranch has uncommited changes. Continue? "
+      (request-user-input) || exit $?
+    fi
+    stash_branch "$1"
   fi
-  lgln -g "Pulling updates from the remote branch origin/$targetBranch..."
   (git push-branch "$1") || exit $?
+  lgln -g "Pulling updates from the remote branch origin/$1..."
   git pull --rebase
   (stop-if-conflicts) || exit $?
-  if defined -s "${stashBranches[2]}"; then
-    lgln -g "Popping off feature branch $targetBranch's stash..."
-    git stash pop
+}
+
+stash_exists() {
+  git stash list | grep "remember$1"
+  return "$?"
+}
+
+remove_item() {
+  sed -i "/$1/d" "$tempFile"
+}
+
+stash_pop() {
+  if stash_exists "$targetBranch"; then
+    if [ "$1" = "$targetBranch" ]; then
+      lgln -g "Popping off feature branch $1's stash..."
+    else
+      lgln -g "Popping off branch $1's stash..."
+    fi
+    local stashName="remember$1"
+    git stash pop "$(git stash list | grep "$stashName" | cut -d: -f1)"
+    remove_item "$stashName" "$tempFile"
     (stop-if-conflicts) || exit $?
   fi
-  lgln -g "Updating feature branch $targetBranch to latest master..."
-  git rebase master
+}
+
+rebase() {
+  if [ "$1" = "$targetBranch" ]; then
+    lgln -g "Rebasing feature branch $1 against $3"
+  elif [ "$3" = "$targetBranch" ]; then
+    lgln -g "Rebasing $1 against feature branch $3"
+  else
+    lgln -g "Rebasing $1 against $3..."
+  fi
+  git rebase "$1"
   (stop-if-conflicts) || exit $?
+}
+
+squash_branch() {
   lgln -g "Squashing commits..."
-  git reset "$(git merge-base master "$targetBranch")"
+  git reset "$(git merge-base master "$1")"
   git add -A
   lgln -g "Please enter a commit message for the single (squashed) commit"
   git commit
   lgln -g "Force (with lease) pushing..."
   git push --force-with-lease
-  lgln -g "Checking out master..."
-  git checkout master
-  lgln -g "Incorporating feature branch $targetBranch's features in master..."
-  git rebase "$targetBranch"
-  (stop-if-conflicts) || exit $?
-  lgln -g "Force deleting (local) feature branch $targetBranch..."
-  git branch -D "$targetBranch"
-  lgln -g "Deleting (remote) feature branch origin/$targetBranch..."
-  git push origin --delete "$targetBranch"
+}
+
+unstash_remembered_stashes() {
+  cp "$tempFile" "${tempFile}.bak"
+  while read -r line; do
+    local branch=${line%%:*}
+    local stashName=${line##*:}
+    if git-branch-exists -s branch; then
+      lgln -g "Looks like there's a stash saved on $branch."
+      checkout "$branch"
+      stash_pop "$stashName"
+      awk '!/pattern/' "$tempFile" >temp && mv temp "$tempFile"
+    fi
+  done <"${tempFile}.bak"
+  rm "${tempFile}.bak"
+}
+
+checkout "master"
+
+if git-branch-exists -s "$targetBranch"; then
+  checkout "$targetBranch"
+  pull_rebase "$targetBranch"
+  if stash_exists "$targetBranch"; then
+    stash_pop "$targetBranch"
+  fi
+  rebase "$targetBranch" against "master"
+  squash_branch "$targetBranch"
+  checkout "master"
+  rebase "master" against "$targetBranch"
   git delete-branch -y "$targetBranch"
   lgln -g "Pushing squashed commit..."
   git push
 fi
 
-# if target branch == current branch,
-if defined -s "${stashBranches[0]}" && [ "$targetBranch" != "$currentBranch" ]; then
-  lgln -g "I remember that $currentBranch had unsaved commits. Let me unstash that"
-  lgln -g "Checking out $currentBranch"
-  git checkout "$currentBranch"
-  lgln -g "Unstashing $currentBranch's stash..."
-  git stash pop
-  (stop-if-conflicts) || exit $?
+if exists "$tempFile"; then
+  unstash_remembered_stashes
 fi
 
-if defined -s "${stashBranches[1]}"; then
-  lgln -g "I remember that master had unsaved commits. Let me unstash that"
-  lgln -g "Checking out master..."
-  git checkout master
-  lgln -g "Unstashing master's stash..."
-  git stash pop
-  (stop-if-conflicts) || exit $?
+# cleanup
+if exists "$tempFile" && ! grep -q '[^[:space:]]' <"$tempFile"; then
+  rm "$tempFile"
 fi
 
 lgln -g "Done! :)"
-
-#if defined -s "${stashBranches[@]}"; then
-#  indices=( "${!stashBranches[@]}" )
-#  for ((i=${#indices[@]} - 1; i >= 0; i--)) ; do
-#      if git branch-exists "${arr[indices[i]]}" ; then
-#        prevBranch="$(git current-branch)"
-#        git checkout "${arr[indices[i]]}"
-#        git stash pop
-#        (stop-if-conflicts) || exit $?
-#        exit_on_error $? !!
-#        git checkout "$prevBranch"
-#      fi
-#  done
-#fi

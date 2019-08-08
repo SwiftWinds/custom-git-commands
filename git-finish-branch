@@ -67,6 +67,7 @@ if git-branch-exists -s "$targetBranch"; then
   git branch -D "$targetBranch"
   lgln -g "Deleting (remote) feature branch origin/$targetBranch..."
   git push origin --delete "$targetBranch"
+  git delete-branch -y "$targetBranch"
   lgln -g "Pushing squashed commit..."
   git push
 fi

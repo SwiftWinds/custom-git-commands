@@ -46,7 +46,7 @@ if [[ "$?" -eq 1 ]]; then
  lgln -g "Looks like there are uncommitted changes... stashing..."
  git stash --include-untracked
  lgln -g "Storing name of branch with uncommitted changes..."
- prevBranch="$(git current-branch)"
+ stashBranch="$(git current-branch)"
 fi
 
 lgln -g "Switching to base branch $baseBranch"
@@ -58,10 +58,10 @@ lgln -g "Pushing..."
 git push
 
 # if a branch not master previously defined
-if [[ -n "${prevBranch+x}" ]]; then
- lgln -g "Checking out ${prevBranch} (branch with uncommitted changes)"
- git checkout "$prevBranch"
- lgln -g "Let me unstash those uncommitted changes to the branch ${prevBranch}..."
+if undefined -s "$stashBranch" ; then
+ lgln -g "Checking out ${stashBranch} (branch with uncommitted changes)"
+ git checkout "$stashBranch"
+ lgln -g "Let me unstash those uncommitted changes to the branch ${stashBranch}..."
  git stash pop
  lgln -g "Checking out new branch ${newBranch}..."
  git checkout "$newBranch"

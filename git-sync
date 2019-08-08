@@ -47,7 +47,7 @@ if currentBranch="$(git current-branch)"; then
     git push --force-with-lease
     lgln -g "Updated target branch $targetBranch with changes from master"
   fi
-  if [ $targetBranchWasDirty = "true" ] ; then
+  if [ $targetBranchWasDirty = "true" ]; then
     # Apply the stashed changes
     lgln -g "Checking out target branch $targetBranch's previously unsaved changes..."
     git checkout "$targetBranch"

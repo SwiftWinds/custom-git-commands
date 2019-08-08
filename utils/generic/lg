@@ -21,10 +21,10 @@ if (( ${+Args[-y]} )); then
 fi
 
 if [ "$#@" -gt 0 ]; then
-	if undefined -s $textColor; then # if textColor undefined, default to green
+	if undefined -s "$textColor" ; then # if textColor undefined, default to green
 		textColor=$GREEN
 	fi
-	input=$@
+	input="$*"
 fi
 
 printf "${textColor}${input}${NC}"

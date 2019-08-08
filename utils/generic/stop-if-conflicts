@@ -1,0 +1,7 @@
+#!/bin/sh
+
+if git conflicts ; then
+    lgln -r "FATAL: cannot continue until all conflicts are resolved."
+    lgln -r "Rerun this once you've resolved them"
+    exit "1"
+fi

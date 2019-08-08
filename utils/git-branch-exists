@@ -1,12 +1,19 @@
-#!/bin/sh
+#!/usr/bin/env zsh
 
-branch=$1
+zparseopts -D -E -A args -- s -silent
 
-git rev-parse --verify "$1" >/dev/null 2>&1
-if [[ "$?" -eq 0 ]]; then
- lgln -g "${branch} exists!"
- exit "0"
+(( silent = ${+args[-s]} + ${+args[--silent]} ))
+
+git rev-parse --verify "$*" >/dev/null 2>&1
+if [ "$?" -eq "0" ]; then
+	if [ $silent = 0 ]; then
+    lgln -g "$* exists!"
+	fi
+	true
 else
- lgln -r "${branch} does NOT exist!"
- exit "1"
+	if [ $silent = 0 ]; then
+    lgln -r "$* does NOT exist!"
+	fi
+	false
 fi
+

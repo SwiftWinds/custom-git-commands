@@ -1,9 +1,17 @@
-#!/bin/sh
+#!/usr/bin/env zsh
 
-if [[ -z "$1" ]]; then
- lgln -r "Undefined!"
- true
+zparseopts -D -E -A args -- s -silent
+
+(( silent = ${+args[-s]} + ${+args[--silent]} ))
+
+if [ "$#@" -gt 0 ]; then
+	if [[ $silent == 0 ]]; then
+		lgln -g "Defined!"
+	fi
+	false
 else
- lgln -g "Defined!"
- false
+	if [[ $silent == 0 ]]; then
+		lgln -r "Undefined!"
+	fi
+	true
 fi

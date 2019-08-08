@@ -30,7 +30,7 @@ if currentBranch="$(git current-branch)"; then
     git rebase upstream/master
     (stop-if-conflicts) || exit $?
   fi
-  if [ "$targetBranch" != "master" ]; then
+  if git-branch-exists -s "$targetBranch" && [ "$targetBranch" != "master" ]; then
     lgln -g "Checking out target branch $targetBranch..."
     git checkout "$targetBranch"
     if git is-dirty; then

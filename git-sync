@@ -45,7 +45,7 @@ if currentBranch="$(git current-branch)"; then
     (stop-if-conflicts) || exit $?
     lgln -g "Force (with lease) pushing..."
     git push --force-with-lease
-    lgln -g "Updated target branch $targetBranch with changes from master"
+    lgln -g "Updated target branch $targetBranch with latest changes from master"
   fi
   if [ $targetBranchWasDirty = "true" ]; then
     # Apply the stashed changes

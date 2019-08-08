@@ -6,6 +6,10 @@ targetBranchWasDirty=false
 
 # Find which is your current branch
 if currentBranch="$(git current-branch)"; then
+  if ! git-branch-exists -s "$targetBranch"; then
+    lg -y "WARN: Looks like the target branch $targetBranch does not exist. Continue? "
+    (request-user-input) || exit $?
+  fi
   lgln -g "On branch $currentBranch"
   if git is-dirty; then
     lgln -g "Looks like there are uncommitted changes on the current branch... stashing..."

@@ -9,6 +9,8 @@ fi
 
 newCommit="WIP: ${newCommit}"
 
+lgln -g "Unstaging all changes..."
+git reset
 lgln -g "Committing empty commit with commit name ${newCommit}..."
 git commit --allow-empty -m "$newCommit"
 lgln -g "Pushing..."

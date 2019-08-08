@@ -6,6 +6,8 @@ commitName=
 lgln -g "Staging all changes..."
 git add -A
 
+currentBranch="$(git current-branch)"
+
 if [[ "$(git prev-commit)" == WIP* ]]; then
   if defined -s "$flag"; then
     if [ "$flag" = "-c" ] || [ "$flag" = "--continue" ]; then
@@ -52,4 +54,4 @@ elif git is-dirty; then
   git commit
 fi
 lgln -g "Force (with lease) pushing..."
-git push --force-with-lease
+git push --force-with-lease --set-upstream origin "$currentBranch"

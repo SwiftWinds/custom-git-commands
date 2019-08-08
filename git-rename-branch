@@ -1,0 +1,19 @@
+#!/bin/sh
+
+oldBranchName=$1
+newBranchName=$2
+
+if git-branch-exists -s "$oldBranchName"; then
+  if undefined -s "$newBranchName"; then
+    lg -g "New branch name: "
+    read -r newBranchName
+  fi
+  lgln -g "Renaming (local) branch $oldBranchName to $newBranchName..."
+  git branch -m "$oldBranchName" "$newBranchName"
+  lgln -g "Deleting (remote) old branch $oldBranchName..."
+  git push origin :"$oldBranchName"
+  lgln -g "Pushing new branch $newBranchName and setting upstream to origin/$newBranchName..."
+  git push --set-upstream origin "$newBranchName"
+else
+  lgln -r "FATAL: the branch-to-be-renamed $oldBranchName does not exist!"
+fi

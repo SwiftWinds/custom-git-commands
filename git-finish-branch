@@ -6,18 +6,22 @@ declare -a stashBranches
 
 (request-user-confirmation-to "finish ${targetBranch}") || exit $?
 
-if ! git branch-exists "$targetBranch"; then
-  lg -y "WARN: Looks like the feature branch $targetBranch does not exist. Continue? "
-  (request-user-input) || exit $?
-fi
+(git-sync "$@") || exit $?
+
+currentBranch="$(git current-branch)"
+
 if git is-dirty; then
-  currentBranch="$(git current-branch)"
   lgln -g "Stashing $currentBranch since there are uncommited changes..."
   git stash --include-untracked
   lgln -g "Remembering $currentBranch had uncommitted changes..."
-  stashBranches[0]="$currentBranch"
+  if [ "$targetBranch" != "$currentBranch" ]; then
+    stashBranches[0]="$currentBranch"
+  else
+    lgln -g "Looks like $currentBranch is also our target branch. I'll make note of that"
+    stashBranches[2]="$currentBranch"
+  fi
 fi
-lg -g "Checking out master..."
+lgln -g "Checking out master..."
 git checkout master
 if git is-dirty; then
   lgln -g "Stashing master since there are uncommited changes..."
@@ -25,16 +29,13 @@ if git is-dirty; then
   lgln -g "Remembering master had uncommitted changes..."
   stashBranches[1]="master"
 fi
-lgln -g "Pulling updates from the remote branch origin/master..."
-git pull --rebase
-(stop-if-conflicts) || exit $?
-if git branch-exists "$targetBranch"; then
-  lg -g "Checking out feature branch $targetBranch..."
+if git-branch-exists -s "$targetBranch"; then
+  lgln -g "Checking out feature branch $targetBranch..."
   git checkout "$targetBranch"
   if git is-dirty; then
     lgln -y "WARN: looks like feature branch $targetBranch has uncommited changes. Continue? "
     (request-user-input) || exit $?
-    lg -g "Stashing unsaved changes on feature branch $targetBranch..."
+    lgln -g "Stashing unsaved changes on feature branch $targetBranch..."
     git stash --include-untracked
     lgln -g "Remembering that feature branch $targetBranch had uncommitted changes..."
     stashBranches[2]="master"
@@ -66,11 +67,12 @@ if git branch-exists "$targetBranch"; then
   git branch -D "$targetBranch"
   lgln -g "Deleting (remote) feature branch origin/$targetBranch..."
   git push origin --delete "$targetBranch"
-  git push
   lgln -g "Pushing squashed commit..."
+  git push
 fi
 
-if defined -s "${stashBranches[0]}"; then
+# if target branch == current branch,
+if defined -s "${stashBranches[0]}" && [ "$targetBranch" != "$currentBranch" ]; then
   lgln -g "I remember that $currentBranch had unsaved commits. Let me unstash that"
   lgln -g "Checking out $currentBranch"
   git checkout "$currentBranch"

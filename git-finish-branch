@@ -10,11 +10,7 @@ tempFile="$tempDir/saved_stashes.txt"
 
 exists() {
   if defined -s "$1"; then
-    if test -f "$FILE"; then
-      return "0"
-    else
-      return "1"
-    fi
+    return $([ -e $1 ])
   else
     return "1"
   fi

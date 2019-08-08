@@ -31,12 +31,12 @@ else
  lgln -g "Using base branch ${baseBranch}"
 fi
 
-if git branch-exists "${newBranch}" >/dev/null 2>&1; then
+if git branch-exists -s "${newBranch}" ; then
  lgln -r "FATAL: branch ${newBranch} already exists!"
  exit "1"
 fi
 
-if ! git branch-exists "${baseBranch}" >/dev/null 2>&1; then
+if ! git branch-exists -s "${baseBranch}" ; then
  lgln -r "FATAL: cannot base off non-existent branch ${baseBranch}!"
  exit "1"
 fi

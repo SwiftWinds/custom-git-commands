@@ -24,7 +24,6 @@ if currentBranch="$(git current-branch)"; then
   (git push-branch master) || exit $?
   git pull --rebase
   (stop-if-conflicts) || exit $?
-  lgln -g "Updated master with changes from origin/master"
   # check if upstream exists, rebase if it does
   if git-is-fork -s; then
     lgln -g "Looks like this is a fork. Rebasing upstream master..."
@@ -41,12 +40,11 @@ if currentBranch="$(git current-branch)"; then
       targetBranchWasDirty=true
     fi
     # Rebase the changes
-    lgln -g "Updating target branch $targetBranch to latest master..."
+    lgln -g "Rebasing target branch $targetBranch onto master..."
     git rebase master
     (stop-if-conflicts) || exit $?
     lgln -g "Force (with lease) pushing..."
     git push --force-with-lease
-    lgln -g "Updated target branch $targetBranch with latest changes from master"
   fi
   if [ $targetBranchWasDirty = "true" ]; then
     # Apply the stashed changes

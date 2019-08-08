@@ -1,0 +1,15 @@
+#!/bin/bash
+
+targetBranch=${1:-"$(git current-branch)"}
+
+lgln -g "Setting $targetBranch's upstream branch to origin/$targetBranch"
+git branch --set-upstream-to=origin/"$targetBranch" "$targetBranch"
+if [ "$?" = "1" ]; then
+  lgln -y "WARN: Looks like this branch has not yet been pushed. Force pushing (with lease)..."
+  git push --force-with-lease --set-upstream origin "$targetBranch"
+  if [ "$?" = "1" ]; then
+    lgln -r "FATAL: looks like this branch is either stale or origin has not been setup. Please do this manually and rerun this command"
+    exit "1"
+  fi
+  git branch --set-upstream-to=origin/"$targetBranch" "$targetBranch"
+fi

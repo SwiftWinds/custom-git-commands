@@ -2,7 +2,7 @@
 
 newCommit=$*
 
-if undefined "$newCommit" >/dev/null 2>&1; then
+if undefined -s "$newCommit"; then
 	lg -g "Name of new commit: "
 	read -r newCommit
 fi

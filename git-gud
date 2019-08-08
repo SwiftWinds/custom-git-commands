@@ -1,19 +1,55 @@
 #!/bin/sh
 
 flag=$1
+commitName=
 
-if git prev-commit | grep -q "WIP"; then
-	if [ "$flag" = "-c" ] || [ "$flag" = "--continue" ]; then
-		git continue-commit
-	else
-		git finish-commit
-	fi
-else
-	if defined -s "$flag"; then
-		lg -y "WARN: flags are not applicable, because the previous commit was not WIP. Commit anyways? "
-		request-user-confirmation
-	fi
-	git add -A
-	git commit
-	git push --force-with-lease
+lgln -g "Staging all changes..."
+git add -A
+
+if [[ "$(git prev-commit)" == WIP* ]]; then
+  if defined -s "$flag"; then
+    if [ "$flag" = "-c" ] || [ "$flag" = "--continue" ]; then
+      git continue-commit
+      exit "$?"
+    elif [ "$flag" = "-f" ] || [ "$flag" = "--finish" ]; then
+      git finish-commit
+      exit "$?"
+    else
+      lg -y "WARN: the previous commit is still WIP. Commit anyways? "
+      (request-user-confirmation) || exit $?
+      if [ "$flag" = "-s" ] || [ "$flag" = "--start" ]; then
+        git start-commit "${@:2}"
+        exit "$?"
+      elif [[ "$1" == -* ]]; then
+        lg -y "WARN: flag is invalid. Commit anyways? "
+        (request-user-confirmation) || exit $?
+        commitName="${@:2}"
+      else
+        commitName="$*"
+      fi
+    fi
+  else
+    git finish-commit
+    exit "$?"
+  fi
+elif defined -s "$flag"; then
+  if [ "$flag" = "-s" ] || [ "$flag" = "--start" ]; then
+    git start-commit "${@:2}"
+    exit "$?"
+  elif [[ "$1" == -* ]]; then
+    lg -y "WARN: flags are not applicable, because the previous commit was not WIP. Commit anyways? "
+    (request-user-confirmation) || exit $?
+    commitName="${@:2}"
+  else
+    commitName="$*"
+  fi
 fi
+if defined -s "$commitName"; then
+  lgln -g "Commiting with commit message $commitName"
+  git commit -m "$commitName"
+else
+  lgln -g "Please enter a commit message"
+  git commit
+fi
+lgln -g "Force (with lease) pushing..."
+git push --force-with-lease

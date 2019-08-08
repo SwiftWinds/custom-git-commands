@@ -41,6 +41,7 @@ if git-branch-exists -s "$targetBranch"; then
     stashBranches[2]="master"
   fi
   lgln -g "Pulling updates from the remote branch origin/$targetBranch..."
+  (git push-branch "$1") || exit $?
   git pull --rebase
   (stop-if-conflicts) || exit $?
   if defined -s "${stashBranches[2]}"; then

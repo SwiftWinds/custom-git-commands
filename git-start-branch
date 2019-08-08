@@ -53,10 +53,9 @@ lgln -g "Switching to base branch $baseBranch"
 git checkout "$baseBranch"
 lgln -g "Creating and switching to new branch called ${newBranch}..."
 git checkout -b "$newBranch"
+git push-branch
 lgln -g "Pushing..."
 git push
-lgln -g "Setting upstream to origin/$newBranch..."
-git branch --set-upstream-to=origin/"$newBranch" "$newBranch"
 
 # if a branch not master previously defined
 if [[ -n "${prevBranch+x}" ]]; then

@@ -19,8 +19,9 @@ if currentBranch="$(git current-branch)"; then
   fi
   lgln -g "Checking out master..."
   git checkout master
-  lgln -g "Pulling updates from the remote branch origin/master..."
   # Pull the branch to update it
+  lgln -g "Pulling updates from the remote branch origin/master..."
+  (git push-branch master) || exit $?
   git pull --rebase
   (stop-if-conflicts) || exit $?
   lgln -g "Updated master with changes from origin/master"

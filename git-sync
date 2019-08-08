@@ -25,7 +25,7 @@ if currentBranch="$(git current-branch)"; then
   (stop-if-conflicts) || exit $?
   lgln -g "Updated master with changes from origin/master"
   # check if upstream exists, rebase if it does
-  if git is-fork; then
+  if git-is-fork -s; then
     lgln -g "Looks like this is a fork. Rebasing upstream master..."
     git rebase upstream/master
     (stop-if-conflicts) || exit $?

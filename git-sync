@@ -51,7 +51,7 @@ if currentBranch="$(git current-branch)"; then
     git stash pop
     (stop-if-conflicts) || exit $?
   fi
-  if [ $currentBranchWasDirty = "true" ] && [ "$currentBranch" != "$targetBranch" ]; then
+  if [ $currentBranchWasDirty = "true" ]; then
     # Apply the stashed changes
     lgln -g "Checking out $currentBranch (the branch you were on when you started syncing)..."
     git checkout "$currentBranch"

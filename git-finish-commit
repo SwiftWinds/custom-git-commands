@@ -3,12 +3,12 @@
 prevCommit=$(git prev-commit)
 
 # check if previous commit contains "WIP"
-if ! git log -1 --pretty=%B | grep -q "WIP" ; then
+if ! git log -1 --pretty=%B | grep -q "WIP"; then
 	lgln -r "FATAL: previous commit was not a WIP commit"
 	exit "1"
 fi
 
-# only safe to declare newCommit 
+# only safe to declare newCommit
 # once we know for sure that prevCommit has "WIP" in it
 newCommit=${prevCommit/WIP: /}
 

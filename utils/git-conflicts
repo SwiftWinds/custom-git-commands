@@ -1,7 +1,7 @@
 #!/bin/bash
 
 CONFLICTS=$(git ls-files -u | wc -l)
-if [ "$CONFLICTS" -gt 0 ] ; then
+if [ "$CONFLICTS" -gt 0 ]; then
    lgln -r "There is a merge conflict!"
    true
 else

@@ -2,13 +2,12 @@
 
 action="$*"
 
-if defined -s "$action" ; then
+if defined -s "$action"; then
   read -p "Are you sure you want to ${action}? " -n 1 -r
 else
   read -p "" -n 1 -r
 fi
-echo    # (optional) move to a new line
-if [[ ! $REPLY =~ ^[Yy]$ ]]
-then
-    exit "1"
+echo # (optional) move to a new line
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+  exit "1"
 fi

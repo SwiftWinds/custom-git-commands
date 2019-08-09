@@ -2,7 +2,7 @@
 
 currentBranch=$(git current-branch)
 
-if git diff-index --quiet HEAD -- >/dev/null 2>&1 && git ls-files --other --directory --exclude-standard | sed q1 >/dev/null 2>&1; then
+if git diff-index --quiet HEAD -- >/dev/null 2>&1 && git ls-files -o --directory --exclude-standard | sed q | wc -l >/dev/null 2>&1; then
   lgln -g "${currentBranch} is clean!"
   false
 else
